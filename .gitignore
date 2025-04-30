@@ -1,0 +1,6 @@
+# Ignore Kafka installation
+kafka/
+*.tgz
+*.jar
+# Ignore virtual environment
+venv/
