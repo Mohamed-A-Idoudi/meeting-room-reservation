@@ -4,3 +4,5 @@ kafka/
 *.jar
 # Ignore virtual environment
 venv/
+# Ignore sensitive files
+docs/sec.txt
