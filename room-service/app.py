@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 
 app = Flask(__name__)
 database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:123@postgres:5432/rooms_db')
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:123@postgres:5432/rooms_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 

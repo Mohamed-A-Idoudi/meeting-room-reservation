@@ -8,8 +8,8 @@ import time
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
-database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:123@postgres:5432/reservations_db')
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:123@10.111.153.141:5432/reservations_db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:123@10.111.153.141:5432/reservations_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
