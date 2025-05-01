@@ -1,0 +1,8 @@
+# Ignore Kafka installation
+kafka/
+*.tgz
+*.jar
+# Ignore virtual environment
+venv/
+# Ignore sensitive files
+docs/sec.txt
