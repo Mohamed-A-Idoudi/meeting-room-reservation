@@ -1,21 +1,34 @@
+import os
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from pykafka import KafkaClient
 import logging
 import threading
 import time
+from sqlalchemy import create_engine
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:123@localhost/rooms_db'
+database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:123@postgres:5432/rooms_db')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 
-# Kafka setup
+# Ensure database exists
 try:
-    client = KafkaClient(hosts="localhost:9092")
+    engine = create_engine(database_url.replace('rooms_db', 'postgres'))
+    conn = engine.connect()
+    conn.execute("CREATE DATABASE IF NOT EXISTS rooms_db")
+    conn.close()
+except Exception as e:
+    logging.error(f"Database creation failed: {e}")
+
+# Kafka setup
+kafka_host = os.environ.get('KAFKA_HOST', 'kafka:9092')
+try:
+    client = KafkaClient(hosts=kafka_host)
     rooms_topic = client.topics['rooms']
     users_topic = client.topics['users']
     reservations_topic = client.topics['reservations']
@@ -26,13 +39,11 @@ except Exception as e:
     logging.error(f"Kafka connection failed: {e}")
     rooms_producer = users_consumer = reservations_consumer = None
 
+# Database model
 class Room(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     available = db.Column(db.Boolean, default=True)
-
-with app.app_context():
-    db.create_all()
 
 # Background thread for consuming Kafka messages
 def consume_kafka():

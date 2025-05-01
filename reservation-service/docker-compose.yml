@@ -1,0 +1,57 @@
+version: '3.8'
+services:
+  user-service:
+    build: ./user-service
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:yourpassword@postgres:5432/users_db
+      - KAFKA_HOST=kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+  room-service:
+    build: ./room-service
+    ports:
+      - "5001:5001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:yourpassword@postgres:5432/rooms_db
+      - KAFKA_HOST=kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+  reservation-service:
+    build: ./reservation-service
+    ports:
+      - "5002:5002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:yourpassword@postgres:5432/reservations_db
+      - KAFKA_HOST=kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=yourpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+volumes:
+  postgres_data:
