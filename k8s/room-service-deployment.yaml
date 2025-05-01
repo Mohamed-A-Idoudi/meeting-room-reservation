@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: room-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: room-service
+  template:
+    metadata:
+      labels:
+        app: room-service
+    spec:
+      containers:
+      - name: room-service
+        image: room-service:latest
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 5001
+        env:
+          - name: DATABASE_URL
+            value: "postgresql://postgres:123@postgres:5432/rooms_db"
+          - name: KAFKA_HOST
+            value: "kafka:9092"

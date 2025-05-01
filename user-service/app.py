@@ -1,21 +1,34 @@
+import os
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from pykafka import KafkaClient
 import logging
 import threading
 import time
+from sqlalchemy import create_engine
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:123@localhost/users_db'
+database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:123@postgres:5432/users_db')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 
-# Kafka setup
+# Ensure database exists
 try:
-    client = KafkaClient(hosts="localhost:9092")
+    engine = create_engine(database_url.replace('users_db', 'postgres'))
+    conn = engine.connect()
+    conn.execute("CREATE DATABASE IF NOT EXISTS users_db")
+    conn.close()
+except Exception as e:
+    logging.error(f"Database creation failed: {e}")
+
+# Kafka setup
+kafka_host = os.environ.get('KAFKA_HOST', 'kafka:9092')
+try:
+    client = KafkaClient(hosts=kafka_host)
     users_topic = client.topics['users']
     rooms_topic = client.topics['rooms']
     reservations_topic = client.topics['reservations']
@@ -27,13 +40,11 @@ except Exception as e:
     logging.error(f"Kafka connection failed: {e}")
     users_producer = users_consumer = rooms_consumer = reservations_consumer = None
 
+# Database model
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(20), default='Employee')  # Employee, Admin, Visitor
-
-with app.app_context():
-    db.create_all()
 
 # Background thread for consuming Kafka messages
 def consume_kafka():
@@ -50,9 +61,8 @@ def consume_kafka():
             for msg in reservations_consumer:
                 if msg is not None:
                     logging.info(f"Reservations topic: {msg.value.decode('utf-8')}")
-        time.sleep(0.1)  # Prevent CPU overload
+        time.sleep(0.1)
 
-# Start consumer thread
 threading.Thread(target=consume_kafka, daemon=True).start()
 
 @app.route('/users', methods=['GET'])

@@ -6,3 +6,28 @@ kafka/
 venv/
 # Ignore sensitive files
 docs/sec.txt
+<<<<<<< HEAD
+=======
+*.txt
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+*.egg-info/
+
+# Docker
+*.log
+*.pid
+
+# Kubernetes
+*.kube
+
+# Environment
+.env
+
+# Backups
+*.sql
+>>>>>>> af04dde (Completed Phase 4: Containerization with Docker, Kubernetes, and NGINX Ingress)
